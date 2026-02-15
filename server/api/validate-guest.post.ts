@@ -1,5 +1,24 @@
 import { google } from 'googleapis'
 
+function parsePrivateKey(key: string): string {
+    // Handle different formats of private key from env vars:
+    // 1. Vercel/dotenv may store \n as literal \\n (two chars)
+    // 2. Or as actual newlines
+    // 3. Or wrapped in quotes
+    let parsed = key.trim()
+
+    // Remove surrounding quotes if present
+    if ((parsed.startsWith('"') && parsed.endsWith('"')) ||
+        (parsed.startsWith("'") && parsed.endsWith("'"))) {
+        parsed = parsed.slice(1, -1)
+    }
+
+    // Replace literal \n with actual newlines
+    parsed = parsed.replace(/\\n/g, '\n')
+
+    return parsed
+}
+
 function getAuth() {
     const config = useRuntimeConfig()
 
@@ -7,10 +26,12 @@ function getAuth() {
         return null
     }
 
+    const privateKey = parsePrivateKey(config.googleSheetsPrivateKey)
+
     return new google.auth.GoogleAuth({
         credentials: {
             client_email: config.googleSheetsClientEmail,
-            private_key: config.googleSheetsPrivateKey.replace(/\\n/g, '\n'),
+            private_key: privateKey,
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     })

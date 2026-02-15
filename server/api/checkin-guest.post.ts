@@ -1,5 +1,18 @@
 import { google } from 'googleapis'
 
+function parsePrivateKey(key: string): string {
+    let parsed = key.trim()
+
+    if ((parsed.startsWith('"') && parsed.endsWith('"')) ||
+        (parsed.startsWith("'") && parsed.endsWith("'"))) {
+        parsed = parsed.slice(1, -1)
+    }
+
+    parsed = parsed.replace(/\\n/g, '\n')
+
+    return parsed
+}
+
 function getAuth() {
     const config = useRuntimeConfig()
 
@@ -7,10 +20,12 @@ function getAuth() {
         return null
     }
 
+    const privateKey = parsePrivateKey(config.googleSheetsPrivateKey)
+
     return new google.auth.GoogleAuth({
         credentials: {
             client_email: config.googleSheetsClientEmail,
-            private_key: config.googleSheetsPrivateKey.replace(/\\n/g, '\n'),
+            private_key: privateKey,
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     })
